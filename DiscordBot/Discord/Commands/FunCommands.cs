@@ -5,10 +5,17 @@ using Microsoft.Extensions.Logging;
 
 namespace DiscordBot.Discord.Commands
 {
+    /// <summary>
+    /// Команды для развлечения
+    /// </summary>
     public class FunCommands : BaseCommand
     {
         private readonly ILogger<FunCommands> _logger;
 
+        /// <summary>
+        /// Конструктор
+        /// </summary>
+        /// <param name="logger">Логгер</param>
         public FunCommands(ILogger<FunCommands> logger)
         {
             _logger = logger;

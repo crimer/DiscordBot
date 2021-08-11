@@ -10,6 +10,9 @@ using Microsoft.Extensions.Options;
 
 namespace DiscordBot.Discord
 {
+    /// <summary>
+    /// Клиент Дискорд Бота
+    /// </summary>
     public class DiscordClient
     {
         private readonly DiscordSocketClient _client;
@@ -19,6 +22,12 @@ namespace DiscordBot.Discord
         private readonly ILogger<DiscordClient> _logger;
         private readonly string _botName;
 
+        /// <summary>
+        /// Конструктор
+        /// </summary>
+        /// <param name="services">Провайдер сервисов</param>
+        /// <param name="logger">Логгер</param>
+        /// <param name="options">Конфиг</param>
         public DiscordClient(IServiceProvider services, 
             ILogger<DiscordClient> logger, IOptions<AppConfig> options)
         {
@@ -35,6 +44,9 @@ namespace DiscordBot.Discord
             _client.Log += OnLog;
         }
 
+        /// <summary>
+        /// Запуск бота
+        /// </summary>
         public async Task StartAsync()
         {
             try
@@ -49,32 +61,46 @@ namespace DiscordBot.Discord
             }
         }
         
+        /// <summary>
+        /// Остановка бота
+        /// </summary>
         public Task StopAsync() => _client.LogoutAsync();
         
+        /// <summary>
+        /// Логирование действий бота
+        /// </summary>
         private Task OnLog(LogMessage arg)
         {
             _logger.LogInformation($"{arg.Message} - {arg.Exception}");
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Обработчик готовности бота
+        /// </summary>
         private Task OnReady()
         {
             _logger.LogInformation("Бот готов ^_^");
             return Task.CompletedTask;
         }
         
+        /// <summary>
+        /// Обработчик сообщений и команд
+        /// </summary>
         private async Task OnHandleCommandAsync(SocketMessage rawMessage)
         {
             try
             {
+                if(string.IsNullOrWhiteSpace(rawMessage.Content))
+                    return;
+                
                 if (rawMessage.Author.IsBot || !(rawMessage is SocketUserMessage message) || message.Channel is IDMChannel)
                     return;
 
                 var context = new SocketCommandContext(_client, message);
-
-                if(string.IsNullOrWhiteSpace(rawMessage.Content))
-                    return;
                 
+                // бот будет обрабаотывать команды только если их в ведут таком формате:
+                // <имя бота> <команда>
                 if(rawMessage.Content.TrimStart().StartsWith(_botName, StringComparison.Ordinal))
                 {
                     var argPos = _botName.Length + 1;
@@ -100,6 +126,10 @@ namespace DiscordBot.Discord
             }
         }
         
+        /// <summary>
+        /// Получение конфига для сервисов бота
+        /// </summary>
+        /// <returns>Конфиг сервисов бота</returns>
         private CommandService GetCommandServiceConfig()
             => new (new CommandServiceConfig()
             {
@@ -107,6 +137,10 @@ namespace DiscordBot.Discord
                 LogLevel = LogSeverity.Error
             });
 
+        /// <summary>
+        /// Получение клиента бота
+        /// </summary>
+        /// <returns>Клиент бота</returns>
         private DiscordSocketClient GetBotConfig()
             => new (new DiscordSocketConfig()
             {

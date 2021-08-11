@@ -7,9 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace DiscordBot.Di
 {
+    /// <summary>
+    /// Регистрация зависимостей приложения
+    /// </summary>
     public static class RegisterDependencies
     {
         private const string AppSettingsFileName = "appsettings.json";
+        
+        
+        /// <summary>
+        /// Конфигурация зависимостей приложения
+        /// </summary>
         public static void ConfigureServices(this IServiceCollection services)
         {
             services.AddLogging(builder =>
@@ -25,10 +33,10 @@ namespace DiscordBot.Di
 
             services.Configure<AppConfig>(configuration.GetSection("Config"));
 
-            // add services:
+            // Сервисы
             services.AddSingleton<DiscordClient>();
 
-            // add Entry point
+            // Точка входа
             services.AddSingleton<App>();
         }
     }
