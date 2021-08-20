@@ -13,10 +13,29 @@ namespace DiscordBot.Discord.Commands
         /// Ответить на сообщение пользователя
         /// </summary>
         /// <param name="message">Текст сообщения</param>
-        /// <param name="messageId">Идентификатор сообщения пользователя</param>
-        protected async Task ReplyToUserMessage(string message, ulong messageId)
+        protected Task ReplyToUserMessageAsync(string message)
         {
-            await this.ReplyAsync(message, messageReference: new MessageReference(messageId));
+            return this.ReplyAsync(message, messageReference: new MessageReference((Context.Message.Id)));
+        }
+        
+        /// <summary>
+        /// Ответить на сообщение пользователя
+        /// </summary>
+        /// <param name="embed">Embed</param>
+        protected Task ReplyToUserMessageAsync(Embed embed)
+        {
+            return this.ReplyAsync(embed: embed, messageReference: new MessageReference(Context.Message.Id));
+        }
+        
+        /// <summary>
+        /// Написать сообщение в лучку пользователю
+        /// </summary>
+        /// <param name="message">Сообщение</param>
+        /// <param name="embed">Embed</param>
+        /// <returns></returns>
+        protected Task DirectMessageToUserAsync(string message, Embed embed)
+        {
+            return Context.User.SendMessageAsync(message, false, embed);
         }
     }
 }

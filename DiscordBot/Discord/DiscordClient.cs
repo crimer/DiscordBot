@@ -28,20 +28,36 @@ namespace DiscordBot.Discord
         /// <param name="services">Провайдер сервисов</param>
         /// <param name="logger">Логгер</param>
         /// <param name="options">Конфиг</param>
-        public DiscordClient(IServiceProvider services, 
-            ILogger<DiscordClient> logger, IOptions<AppConfig> options)
+        public DiscordClient(IServiceProvider services, ILogger<DiscordClient> logger, IOptions<AppConfig> options)
         {
             _botName = options.Value.BotName;
             _botToken = options.Value.BotToken;
             _services = services;
             _logger = logger;
-            
+
             _commands = GetCommandServiceConfig();
-            _client = GetBotConfig();
+            _commands.Log += CommandsOnLog;
             
+            _client = GetBotConfig();
             _client.Ready += OnReady;
             _client.MessageReceived += OnHandleCommandAsync;
             _client.Log += OnLog;
+        }
+
+        /// <summary>
+        /// Получить экземпляр клиента бота
+        /// </summary>
+        /// <returns></returns>
+        public DiscordSocketClient GetClient() => _client;
+        
+        /// <summary>
+        /// Лог выщова команд
+        /// </summary>
+        /// <param name="arg">Лог сообщение</param>
+        private Task CommandsOnLog(LogMessage arg)
+        {
+            _logger.LogInformation($"Вызвана команда с ошибкой: {arg.Message}");
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -78,10 +94,9 @@ namespace DiscordBot.Discord
         /// <summary>
         /// Обработчик готовности бота
         /// </summary>
-        private Task OnReady()
+        private async Task OnReady()
         {
             _logger.LogInformation("Бот готов ^_^");
-            return Task.CompletedTask;
         }
         
         /// <summary>
@@ -96,14 +111,17 @@ namespace DiscordBot.Discord
                 
                 if (rawMessage.Author.IsBot || !(rawMessage is SocketUserMessage message) || message.Channel is IDMChannel)
                     return;
-
+                
                 var context = new SocketCommandContext(_client, message);
                 
-                // бот будет обрабаотывать команды только если их в ведут таком формате:
-                // <имя бота> <команда>
-                if(rawMessage.Content.TrimStart().StartsWith(_botName, StringComparison.Ordinal))
+                var argPos = 0;
+
+                if (message.HasMentionPrefix(_client.CurrentUser, ref argPos) || 
+                    rawMessage.Content.TrimStart().StartsWith(_botName, StringComparison.Ordinal))
                 {
-                    var argPos = _botName.Length + 1;
+                    if(rawMessage.Content.TrimStart().StartsWith(_botName, StringComparison.Ordinal))
+                        argPos = _botName.Length + 1;
+                    
                     var result = await _commands.ExecuteAsync(context, argPos, _services);
 
                     if (!result.IsSuccess && result.Error.HasValue)
@@ -114,7 +132,7 @@ namespace DiscordBot.Discord
                             _logger.LogError($"Не знаю такую команду: {rawMessage.Content}");
                             return;
                         }
-                            
+
                         await context.Channel.SendMessageAsync($":x: {result.ErrorReason}");
                         _logger.LogError($"Не удалось выполнить команду: {result.ErrorReason}");
                     }
@@ -131,7 +149,7 @@ namespace DiscordBot.Discord
         /// </summary>
         /// <returns>Конфиг сервисов бота</returns>
         private CommandService GetCommandServiceConfig()
-            => new (new CommandServiceConfig()
+            => new CommandService (new CommandServiceConfig()
             {
                 DefaultRunMode = RunMode.Async,
                 LogLevel = LogSeverity.Error
@@ -142,7 +160,7 @@ namespace DiscordBot.Discord
         /// </summary>
         /// <returns>Клиент бота</returns>
         private DiscordSocketClient GetBotConfig()
-            => new (new DiscordSocketConfig()
+            => new DiscordSocketClient(new DiscordSocketConfig()
             {
                 MessageCacheSize = 500,
             });
