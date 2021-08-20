@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using DiscordBot.Configuration;
 using DiscordBot.Discord;
+using DiscordBot.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,6 @@ namespace DiscordBot.Di
     public static class RegisterDependencies
     {
         private const string AppSettingsFileName = "appsettings.json";
-        
         
         /// <summary>
         /// Конфигурация зависимостей приложения
@@ -33,11 +33,12 @@ namespace DiscordBot.Di
 
             services.Configure<AppConfig>(configuration.GetSection("Config"));
 
-            // Сервисы
-            services.AddSingleton<DiscordClient>();
-
-            // Точка входа
             services.AddSingleton<App>();
+
+            // Сервисы
+            services.AddSingleton<DiscordClient>()
+                .AddSingleton<MusicService>()
+                .AddSingleton<AudioService>();
         }
     }
 }
