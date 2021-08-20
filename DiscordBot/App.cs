@@ -32,7 +32,7 @@ namespace DiscordBot
         {
             try
             {
-                _logger.LogInformation("Starting...");
+                _logger.LogInformation("Стартуем...");
                 await _discordClient.StartAsync();
             }
             catch (Exception ex)
